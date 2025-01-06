@@ -85,6 +85,40 @@ esp_err_t app_btn_rm_event_callback(bsp_button_t btn, size_t event)
     return ESP_OK;
 }
 
+void ui_1_28_start(lv_disp_t *disp)
+{
+    // 设置为当前活动显示设备
+    lv_disp_set_default(disp);
+
+    // 创建主屏幕
+    lv_obj_t *scr = lv_scr_act();
+    lv_obj_set_style_bg_color(scr, lv_color_black(), 0);
+    
+    // 创建一个简单的标签
+    lv_obj_t *label = lv_label_create(scr);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+    lv_label_set_text(label, "1.28\" LCD");
+    lv_obj_center(label);
+}
+
+void ui_096_start(lv_disp_t *disp)
+{
+    // 设置为当前活动显示设备
+    lv_disp_set_default(disp);
+
+    // 创建主屏幕
+    lv_obj_t *scr = lv_scr_act();
+    lv_obj_set_style_bg_color(scr, lv_color_black(), 0);
+
+    // 创建标题标签
+    lv_obj_t *title = lv_label_create(scr);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(title, lv_color_white(), 0);
+    lv_label_set_text(title, "0.96\" LCD");
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 5);
+}
+
 void app_main(void)
 {
     esp_err_t err = nvs_flash_init();
@@ -94,17 +128,22 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
 
+    lv_disp_t* disp_096;
+    lv_disp_t* disp_128;
+
     printf_stack();
-    bsp_display_start();
+    bsp_display_start(&disp_096, &disp_128);
     bsp_display_backlight_on();
 
-    app_btn_init();
-    app_btn_register_callback(BSP_BUTTON_CONFIG, BUTTON_PRESS_UP, btn_select_sw_cb, NULL);
-    app_btn_register_callback(BSP_BUTTON_CONFIG, BUTTON_PRESS_DOWN, btn_select_sw_cb, NULL);
+    // app_btn_init();
+    // app_btn_register_callback(BSP_BUTTON_CONFIG, BUTTON_PRESS_UP, btn_select_sw_cb, NULL);
+    // app_btn_register_callback(BSP_BUTTON_CONFIG, BUTTON_PRESS_DOWN, btn_select_sw_cb, NULL);
 
-#if USE_SCREEN_096
-    ui_1_28_start(0);
-#else
-    ui_1_28_start(1);
-#endif
+// #if USE_SCREEN_096
+    // ui_1_28_start(0);
+// #else
+    // ui_1_28_start(1);
+// #endif
+    ui_1_28_start(disp_128);  // 使用1.28寸作为默认显示设备
+    ui_096_start(disp_096);  // 获取第二个显示设备用于0.96寸屏幕
 }

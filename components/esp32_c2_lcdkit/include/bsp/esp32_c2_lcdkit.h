@@ -59,7 +59,8 @@ extern "C" {
  */
 typedef struct {
     lvgl_port_cfg_t lvgl_port_cfg;  /*!< LVGL port configuration */
-    uint32_t        buffer_size;    /*!< Size of the buffer for the screen in pixels */
+    uint32_t        buffer_size_096;    /*!< Size of the buffer for the screen in pixels */
+    uint32_t        buffer_size_128;    /*!< Size of the buffer for the screen in pixels */
     bool            double_buffer;  /*!< True, if should be allocated two buffers */
     struct {
         unsigned int buff_dma: 1;    /*!< Allocated LVGL buffer will be DMA capable */
@@ -91,7 +92,7 @@ typedef struct {
  *
  * @return Pointer to LVGL display or NULL when error occurred
  */
-lv_disp_t *bsp_display_start(void);
+void bsp_display_start(lv_disp_t **disp_096, lv_disp_t **disp_128);
 
 /**
  * @brief Initialize display
@@ -103,7 +104,7 @@ lv_disp_t *bsp_display_start(void);
  *
  * @return Pointer to LVGL display or NULL when error occurred
  */
-lv_disp_t *bsp_display_start_with_config(const bsp_display_cfg_t *cfg);
+void bsp_display_start_with_config(const bsp_display_cfg_t *cfg, lv_disp_t **disp_096, lv_disp_t **disp_128);
 
 
 /**

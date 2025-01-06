@@ -70,7 +70,7 @@ static const button_config_t bsp_adc_button_config[BSP_ADC_BUTTON_NUM] = {
     },
 };
 
-#if USE_SCREEN_096
+// #if USE_SCREEN_096
 static const ili9341_lcd_init_cmd_t vendor_0_96_specific_init[] = {
 
 //0.9  方屏
@@ -94,7 +94,7 @@ static const ili9341_lcd_init_cmd_t vendor_0_96_specific_init[] = {
     {0x2C, NULL, 0, 0},     // Memory write
 };
 
-#else
+// #else
 static const ili9341_lcd_init_cmd_t vendor_1_28_specific_init[] = {
 
   //1.0圆屏
@@ -128,7 +128,7 @@ static const ili9341_lcd_init_cmd_t vendor_1_28_specific_init[] = {
 
     {0x29, (uint8_t []){0x2C}, 1, 0},
 };
-#endif
+// #endif
 
 esp_err_t bsp_spiffs_mount(void)
 {
@@ -163,30 +163,35 @@ esp_err_t bsp_spiffs_unmount(void)
     return esp_vfs_spiffs_unregister(CONFIG_BSP_SPIFFS_PARTITION_LABEL);
 }
 
-static lv_disp_t *bsp_display_lcd_init(const bsp_display_cfg_t *cfg)
+static void bsp_display_lcd_init(const bsp_display_cfg_t *cfg, lv_disp_t **disp_096, lv_disp_t **disp_128)
 {
     assert(cfg != NULL);
-    esp_lcd_panel_io_handle_t io_handle = NULL;
-    esp_lcd_panel_handle_t panel_handle = NULL;
+    esp_lcd_panel_io_handle_t io_handle_096 = NULL;
+    esp_lcd_panel_handle_t panel_handle_096 = NULL;
+    esp_lcd_panel_io_handle_t io_handle_128 = NULL;
+    esp_lcd_panel_handle_t panel_handle_128 = NULL;
+    
     bsp_display_config_t bsp_disp_cfg;
 
-    #if USE_SCREEN_096
-        bsp_disp_cfg.max_transfer_sz = BSP_LCD_0_9_6_H_RES * 80 * sizeof(uint16_t);
-    #else
+    // #if USE_SCREEN_096
+        // bsp_disp_cfg.max_transfer_sz = BSP_LCD_0_9_6_H_RES * 80 * sizeof(uint16_t);
+    // #else
         bsp_disp_cfg.max_transfer_sz = BSP_LCD_1_2_8_H_RES * 80 * sizeof(uint16_t);
-    #endif
+    // #endif
   
     
-    BSP_ERROR_CHECK_RETURN_NULL(bsp_display_new(&bsp_disp_cfg, &panel_handle, &io_handle));
+    BSP_ERROR_CHECK_RETURN_NULL(bsp_display_new(&bsp_disp_cfg, &panel_handle_096, &io_handle_096, &panel_handle_128, &io_handle_128));
 
-    esp_lcd_panel_disp_on_off(panel_handle, true);
+    // esp_lcd_panel_disp_on_off(panel_handle, true);
+    esp_lcd_panel_disp_on_off(panel_handle_096, true);
+    esp_lcd_panel_disp_on_off(panel_handle_128, true);
 
     /* Add LCD screen */
     ESP_LOGD(TAG, "Add LCD screen");
-    lvgl_port_display_cfg_t disp_cfg = {
-        .io_handle = io_handle,
-        .panel_handle = panel_handle,
-        .buffer_size = cfg->buffer_size,
+    lvgl_port_display_cfg_t disp_cfg_096 = {
+        .io_handle = io_handle_096,
+        .panel_handle = panel_handle_096,
+        .buffer_size = cfg->buffer_size_096,
         .double_buffer = cfg->double_buffer,
         .monochrome = false,
         /* Rotation values must be same as used in esp_lcd for initial settings of the screen */
@@ -201,15 +206,44 @@ static lv_disp_t *bsp_display_lcd_init(const bsp_display_cfg_t *cfg)
         }
     };
 
-    #if USE_SCREEN_096
-        disp_cfg.hres = BSP_LCD_0_9_6_H_RES;
-        disp_cfg.vres = BSP_LCD_0_9_6_V_RES;
-    #else
-        disp_cfg.hres = BSP_LCD_1_2_8_H_RES;
-        disp_cfg.vres = BSP_LCD_1_2_8_V_RES;
-    #endif
-    ESP_LOGI(TAG, "hres: %d, vres: %d", (int)disp_cfg.hres, (int)disp_cfg.vres);
-    return lvgl_port_add_disp(&disp_cfg);
+    // #if USE_SCREEN_096
+        disp_cfg_096.hres = BSP_LCD_0_9_6_H_RES;
+        disp_cfg_096.vres = BSP_LCD_0_9_6_V_RES;
+    // #else
+        // disp_cfg.hres = BSP_LCD_1_2_8_H_RES;
+        // disp_cfg.vres = BSP_LCD_1_2_8_V_RES;
+    // #endif
+    ESP_LOGI(TAG, "hres: %d, vres: %d", (int)disp_cfg_096.hres, (int)disp_cfg_096.vres);
+    *disp_096 = lvgl_port_add_disp(&disp_cfg_096);
+
+    lvgl_port_display_cfg_t disp_cfg_128 = {
+        .io_handle = io_handle_128,
+        .panel_handle = panel_handle_128,
+        .buffer_size = cfg->buffer_size_128,
+        .double_buffer = cfg->double_buffer,
+        .monochrome = false,
+        /* Rotation values must be same as used in esp_lcd for initial settings of the screen */
+        .rotation = {
+            .swap_xy = false,
+            .mirror_x = true,
+            .mirror_y = false,
+        },
+        .flags = {
+            .buff_dma = cfg->flags.buff_dma,
+            .buff_spiram = cfg->flags.buff_spiram,
+        }
+    };
+
+    // #if USE_SCREEN_096
+        // disp_cfg.hres = BSP_LCD_0_9_6_H_RES;
+        // disp_cfg.vres = BSP_LCD_0_9_6_V_RES;
+    // #else
+        disp_cfg_128.hres = BSP_LCD_1_2_8_H_RES;
+        disp_cfg_128.vres = BSP_LCD_1_2_8_V_RES;
+    // #endif
+    ESP_LOGI(TAG, "hres: %d, vres: %d", (int)disp_cfg_128.hres, (int)disp_cfg_128.vres);
+    *disp_128 = lvgl_port_add_disp(&disp_cfg_128);
+    // return lvgl_port_add_disp(&disp_cfg);
 }
 
 // Bit number used to represent command and parameter
@@ -263,7 +297,7 @@ void bsp_set_cs_low()
     gpio_set_level(5, 1);
 
 }
-esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_handle_t *ret_panel, esp_lcd_panel_io_handle_t *ret_io)
+esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_handle_t *ret_panel_096, esp_lcd_panel_io_handle_t *ret_io_096, esp_lcd_panel_handle_t *ret_panel_128, esp_lcd_panel_io_handle_t *ret_io_128)
 {
     bsp_set_cs_low();
 
@@ -284,34 +318,66 @@ esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_hand
     ESP_RETURN_ON_ERROR(spi_bus_initialize(BSP_LCD_SPI_NUM, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
 
     ESP_LOGI(TAG, "Install panel IO");
-    const esp_lcd_panel_io_spi_config_t io_config = {
+    const esp_lcd_panel_io_spi_config_t io_config_096 = {
         .dc_gpio_num = BSP_LCD_DC,
-#if USE_SCREEN_096
+// #if USE_SCREEN_096
         .cs_gpio_num = BSP_LCD_CS_096,
-#else
-        .cs_gpio_num = BSP_LCD_CS_100,
-#endif
+// #else
+        // .cs_gpio_num = BSP_LCD_CS_100,
+// #endif
         .pclk_hz = BSP_LCD_PIXEL_CLOCK_HZ,
         .lcd_cmd_bits = LCD_CMD_BITS,
         .lcd_param_bits = LCD_PARAM_BITS,
         .spi_mode = 0,
         .trans_queue_depth = 10,
     };
-    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_LCD_SPI_NUM, &io_config, ret_io), err, TAG, "New panel IO failed");
 
-
-    ESP_LOGI(TAG, "Install LCD driver");
-    const ili9341_vendor_config_t vendor_config = {
-#if USE_SCREEN_096
-        .init_cmds = &vendor_0_96_specific_init[0],
-        .init_cmds_size = sizeof(vendor_0_96_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
-#else
-        .init_cmds = &vendor_1_28_specific_init[0],
-        .init_cmds_size = sizeof(vendor_1_28_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
-#endif
+    const esp_lcd_panel_io_spi_config_t io_config_128 = {
+        .dc_gpio_num = BSP_LCD_DC,
+// #if USE_SCREEN_096
+        // .cs_gpio_num = BSP_LCD_CS_128,
+// #else
+        .cs_gpio_num = BSP_LCD_CS_100,
+// #endif
+        .pclk_hz = BSP_LCD_PIXEL_CLOCK_HZ,
+        .lcd_cmd_bits = LCD_CMD_BITS,
+        .lcd_param_bits = LCD_PARAM_BITS,
+        .spi_mode = 0,
+        .trans_queue_depth = 10,
     };
 
-    esp_lcd_panel_dev_config_t panel_config = {
+    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_LCD_SPI_NUM, &io_config_096, ret_io_096), err, TAG, "New panel IO failed");
+    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_LCD_SPI_NUM, &io_config_128, ret_io_128), err, TAG, "New panel IO failed");
+
+    ESP_LOGI(TAG, "Install LCD driver");
+    const ili9341_vendor_config_t vendor_config_096 = {
+// #if USE_SCREEN_096
+        .init_cmds = &vendor_0_96_specific_init[0],
+        .init_cmds_size = sizeof(vendor_0_96_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
+// #else
+        // .init_cmds = &vendor_1_28_specific_init[0],
+        // .init_cmds_size = sizeof(vendor_1_28_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
+// #endif
+    };
+
+    const ili9341_vendor_config_t vendor_config_128 = {
+// #if USE_SCREEN_096
+        // .init_cmds = &vendor_0_96_specific_init[0],
+        // .init_cmds_size = sizeof(vendor_0_96_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
+// #else
+        .init_cmds = &vendor_1_28_specific_init[0],
+        .init_cmds_size = sizeof(vendor_1_28_specific_init) / sizeof(ili9341_lcd_init_cmd_t),
+// #endif
+    };
+
+    esp_lcd_panel_dev_config_t panel_config_096 = {
+        .reset_gpio_num = BSP_LCD_RST, // Shared with Touch reset
+        .flags.reset_active_high = false,
+        .color_space = BSP_LCD_COLOR_SPACE,
+        .bits_per_pixel = BSP_LCD_BITS_PER_PIXEL,
+    };
+
+    esp_lcd_panel_dev_config_t panel_config_128 = {
         .reset_gpio_num = BSP_LCD_RST, // Shared with Touch reset
         .flags.reset_active_high = false,
         .color_space = BSP_LCD_COLOR_SPACE,
@@ -321,46 +387,66 @@ esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_hand
     // ESP_LOGW(TAG, "New panel, select:%s", button_gpio_get_key_level((void *)BSP_LCD_SELECT) ? "right" : "left");
 
     // #if 1
-        panel_config.vendor_config = (void *) &vendor_config;
-        ESP_GOTO_ON_ERROR(esp_lcd_new_panel_ili9341(*ret_io, &panel_config, ret_panel), err, TAG, "New panel failed");
+        // panel_config.vendor_config = (void *) &vendor_config;
+        panel_config_096.vendor_config = (void *) &vendor_config_096;
+        panel_config_128.vendor_config = (void *) &vendor_config_128;
+        ESP_GOTO_ON_ERROR(esp_lcd_new_panel_ili9341(*ret_io_096, &panel_config_096, ret_panel_096), err, TAG, "New panel failed");
+        ESP_GOTO_ON_ERROR(esp_lcd_new_panel_ili9341(*ret_io_128, &panel_config_128, ret_panel_128), err, TAG, "New panel failed");
     // #else
     //     panel_config.vendor_config = NULL;
     //     ESP_GOTO_ON_ERROR(esp_lcd_new_panel_gc9a01(*ret_io, &panel_config, ret_panel), err, TAG, "New panel failed");
     // #endif
-  
 
+    // BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_reset(*ret_panel));
+    // BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_init(*ret_panel));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_reset(*ret_panel_096));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_init(*ret_panel_096));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_reset(*ret_panel_128));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_init(*ret_panel_128));
 
-    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_reset(*ret_panel));
-    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_init(*ret_panel));
-
-    #if USE_SCREEN_096
-        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel, 24, 0));
-        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel, true, true));
-    #else
-        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel, 0, 32));
-        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_invert_color(*ret_panel, false));
-        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel, true, true));
-    #endif
+    // #if USE_SCREEN_096
+        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel_096, 24, 0));
+        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel_096, true, true));
+    // #else
+        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel_128, 0, 32));
+        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_invert_color(*ret_panel_128, false));
+        BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel_128, true, true));
+    // #endif
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_on_off(*ret_panel, true));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_on_off(*ret_panel_096, true));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_on_off(*ret_panel_128, true));
 #else
-    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_off(*ret_panel, false));
+    // BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_off(*ret_panel, false));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_off(*ret_panel_096, false));
+    BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_disp_off(*ret_panel_128, false));
 #endif
 
     return ret;
 
 err:
-    if (*ret_panel) {
-        esp_lcd_panel_del(*ret_panel);
+    // if (*ret_panel) {
+    //     esp_lcd_panel_del(*ret_panel);
+    // }
+    // if (*ret_io) {
+    //     esp_lcd_panel_io_del(*ret_io);
+    // }
+    if (*ret_panel_096) {
+        esp_lcd_panel_del(*ret_panel_096);
     }
-    if (*ret_io) {
-        esp_lcd_panel_io_del(*ret_io);
+    if (*ret_io_096) {
+        esp_lcd_panel_io_del(*ret_io_096);
+    }
+    if (*ret_panel_128) {
+        esp_lcd_panel_del(*ret_panel_128);
+    }
+    if (*ret_io_128) {
+        esp_lcd_panel_io_del(*ret_io_128);
     }
     spi_bus_free(BSP_LCD_SPI_NUM);
     return ret;
 }
 
-lv_disp_t *bsp_display_start(void)
+void bsp_display_start(lv_disp_t **disp_096, lv_disp_t **disp_128)
 {
     bsp_display_cfg_t cfg = {
         .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
@@ -376,24 +462,25 @@ lv_disp_t *bsp_display_start(void)
     };
     cfg.lvgl_port_cfg.task_stack = 6*1024;
 
-    #if USE_SCREEN_096
-        cfg.buffer_size = BSP_LCD_0_9_6_H_RES * BSP_LCD_0_9_6_V_RES;
-    #else
-        cfg.buffer_size = BSP_LCD_1_2_8_H_RES * BSP_LCD_1_2_8_V_RES;
+    // #if USE_SCREEN_096
+        cfg.buffer_size_096 = BSP_LCD_0_9_6_H_RES * BSP_LCD_0_9_6_V_RES;
+    // #else
+        cfg.buffer_size_128 = BSP_LCD_1_2_8_H_RES * BSP_LCD_1_2_8_V_RES;
         cfg.double_buffer = 0;
-    #endif
+    // #endif
 
-    return bsp_display_start_with_config(&cfg);
+    bsp_display_start_with_config(&cfg, disp_096, disp_128);
 }
 
-lv_disp_t *bsp_display_start_with_config(const bsp_display_cfg_t *cfg)
+void bsp_display_start_with_config(const bsp_display_cfg_t *cfg, lv_disp_t **disp_096, lv_disp_t **disp_128)
 {
-    lv_disp_t *disp;
+    // lv_disp_t *disp;
     BSP_ERROR_CHECK_RETURN_NULL(lvgl_port_init(&cfg->lvgl_port_cfg));
-    BSP_NULL_CHECK(disp = bsp_display_lcd_init(cfg), NULL);
+    // BSP_NULL_CHECK(bsp_display_lcd_init(cfg), NULL);
     // BSP_NULL_CHECK(disp_indev = bsp_display_indev_init(disp), NULL);
+    bsp_display_lcd_init(cfg, disp_096, disp_128);
 
-    return disp;
+    // return disp;
 }
 
 lv_indev_t *bsp_display_get_input_dev(void)
