@@ -376,7 +376,7 @@ lv_disp_t *bsp_display_start(void)
     };
     cfg.lvgl_port_cfg.task_stack = 6*1024;
 
-     #if USE_SCREEN_096
+    #if USE_SCREEN_096
         cfg.buffer_size = BSP_LCD_0_9_6_H_RES * BSP_LCD_0_9_6_V_RES;
     #else
         cfg.buffer_size = BSP_LCD_1_2_8_H_RES * BSP_LCD_1_2_8_V_RES;
