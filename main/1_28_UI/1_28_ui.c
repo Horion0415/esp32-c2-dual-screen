@@ -21,6 +21,9 @@
 
 static const char *TAG = "1_28_ui";
 
+static mmap_assets_handle_t mmap_handle_A;
+static mmap_assets_handle_t mmap_handle_B;
+
 static void btn_press_left_cb(void *handle, void *arg);
 
 static void btn_press_OK_cb(void *handle, void *arg);
@@ -79,22 +82,28 @@ static void perfmon_end(int ctr, int count)
            ctr, perf_counters[ctr].str1, perf_counters[ctr].str2, frequency, time_in_sec * 1000 / count);
 }
 
-void ui_1_28_start(uint8_t select)
+void ui_1_28_init(void)
 {
-    static lv_img_dsc_t img_dsc_motive;
-
-    app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_PREV, BUTTON_PRESS_UP, btn_press_left_cb, NULL);
-    app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_ENTER, BUTTON_PRESS_UP, btn_press_OK_cb, NULL);
-    app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_NEXT, BUTTON_PRESS_UP, btn_press_right_cb, NULL);
+    // app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_PREV, BUTTON_PRESS_UP, btn_press_left_cb, NULL);
+    // app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_ENTER, BUTTON_PRESS_UP, btn_press_OK_cb, NULL);
+    // app_btn_register_callback(BSP_BUTTON_NUM + BSP_ADC_BUTTON_NEXT, BUTTON_PRESS_UP, btn_press_right_cb, NULL);
 
     image_mmap_init();
+}
+
+
+static void ui_1_28_task(void *arg)
+{
+    lv_disp_t *disp = (lv_disp_t *)arg;
+    lv_img_dsc_t img_dsc_motive;
+
+    // bsp_display_lock(0);
+
+    ESP_LOGI(TAG, "ui_0_96_task screen size:[%d,%d]", LV_HOR_RES, LV_VER_RES);
 
     bsp_display_lock(0);
 
-    ESP_LOGI(TAG, "screen size:[%d,%d]", LV_HOR_RES, LV_VER_RES);
-
-    bsp_display_lock(0);
-
+    lv_disp_set_default(disp);
     lv_obj_t *obj_bg = lv_obj_create(lv_scr_act());
     lv_obj_set_size(obj_bg, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_align(obj_bg, LV_ALIGN_CENTER);
@@ -110,17 +119,17 @@ void ui_1_28_start(uint8_t select)
 
     theme_select_t theme_last = THEME_MAX_NUM;
     uint8_t list = 100;
-    int fps_count = 0;
+    // int fps_count = 0;
 
-    static mmap_assets_handle_t handle;
     uint32_t max_size = 0;
-    if (select == 1) {
-        handle  = asset_DriverA_handle;
+    // if (select == 1) {
+        mmap_handle_A  = asset_DriverA_handle;
         max_size = MMAP_OUT1_FILES;
-    } else {
-        handle  = asset_DriverB_handle;
-        max_size = MMAP_OUT2_FILES;
-    }
+    // }
+    // else {
+    //     mmap_handle  = asset_DriverB_handle;
+    //     max_size = MMAP_OUT2_FILES;
+    // }
 
     while (1) {
         bsp_display_lock(0);
@@ -132,9 +141,192 @@ void ui_1_28_start(uint8_t select)
             list++;
             lv_obj_clear_flag(obj_img_run_particles, LV_OBJ_FLAG_HIDDEN);
 
-            img_dsc_motive.data_size = mmap_assets_get_size(handle, (list) % max_size);
-            img_dsc_motive.data = mmap_assets_get_mem(handle, (list) % max_size);
+            img_dsc_motive.data_size = mmap_assets_get_size(mmap_handle_A, (list) % max_size);
+            img_dsc_motive.data = mmap_assets_get_mem(mmap_handle_A, (list) % max_size);
             lv_img_set_src(obj_img_run_particles, &img_dsc_motive);
+
+            // if (fps_count % 10 == 0) {
+            //     perfmon_start(0, "PFS", "png");
+            //     // printf_stack();
+            // } else if (fps_count % 10 == 9) {
+            //     perfmon_end(0, 10);
+            // }
+            // fps_count++;
+        } else {
+            list = 0;
+            lv_obj_add_flag(obj_img_run_particles, LV_OBJ_FLAG_HIDDEN);
+        }
+        lv_refr_now(NULL);
+        bsp_display_unlock();
+
+        // if (select == 1) {
+            vTaskDelay(pdMS_TO_TICKS(5));
+        // } 
+        // else {
+        //     vTaskDelay(pdMS_TO_TICKS(1));
+        // }
+    }
+
+    mmap_assets_del(asset_DriverA_handle);
+    mmap_assets_del(asset_DriverB_handle);
+}
+
+static void ui_0_96_task(void *arg)
+{
+    lv_disp_t *disp = (lv_disp_t *)arg;
+    lv_img_dsc_t img_dsc_motive;
+
+    // bsp_display_lock(0);
+
+    ESP_LOGI(TAG, "ui_0_96_task screen size:[%d,%d]", LV_HOR_RES, LV_VER_RES);
+
+    bsp_display_lock(0);
+
+    lv_disp_set_default(disp);
+    lv_obj_t *obj_bg = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(obj_bg, LV_HOR_RES, LV_VER_RES);
+    lv_obj_set_align(obj_bg, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(obj_bg, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(obj_bg, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_border_width(obj_bg, 0, 0);
+    lv_obj_set_style_radius(obj_bg, 0, 0);
+
+    lv_obj_t *obj_img_run_particles = lv_img_create(obj_bg);
+    lv_obj_set_align(obj_img_run_particles, LV_ALIGN_CENTER);
+
+    bsp_display_unlock();
+
+    theme_select_t theme_last = THEME_MAX_NUM;
+    uint8_t list = 100;
+    // int fps_count = 0;
+
+    static mmap_assets_handle_t mmap_handle_B;
+    uint32_t max_size = 0;
+    // if (select == 1) {
+    //     mmap_handle  = asset_DriverA_handle;
+    //     max_size = MMAP_OUT1_FILES;
+    // }
+    // else {
+        mmap_handle_B  = asset_DriverB_handle;
+        max_size = MMAP_OUT2_FILES;
+    // }
+
+    while (1) {
+        bsp_display_lock(0);
+
+        if (theme_last ^ theme_select) {
+            theme_last = theme_select;
+        }
+        if (true == anmi_do_run) {
+            list++;
+            lv_obj_clear_flag(obj_img_run_particles, LV_OBJ_FLAG_HIDDEN);
+
+            img_dsc_motive.data_size = mmap_assets_get_size(mmap_handle_B, (list) % max_size);
+            img_dsc_motive.data = mmap_assets_get_mem(mmap_handle_B, (list) % max_size);
+            lv_img_set_src(obj_img_run_particles, &img_dsc_motive);
+
+            // if (fps_count % 10 == 0) {
+            //     perfmon_start(0, "PFS", "png");
+            //     // printf_stack();
+            // } else if (fps_count % 10 == 9) {
+            //     perfmon_end(0, 10);
+            // }
+            // fps_count++;
+        } else {
+            list = 0;
+            lv_obj_add_flag(obj_img_run_particles, LV_OBJ_FLAG_HIDDEN);
+        }
+        lv_refr_now(NULL);
+        bsp_display_unlock();
+
+        // if (select == 1) {
+        //     vTaskDelay(pdMS_TO_TICKS(5));
+        // } 
+        // else {
+            vTaskDelay(pdMS_TO_TICKS(1));
+        // }
+    }
+
+    mmap_assets_del(asset_DriverA_handle);
+    mmap_assets_del(asset_DriverB_handle);
+}
+
+void ui_start(lv_disp_t *disp_096, lv_disp_t *disp_128)
+{
+    // xTaskCreate(ui_1_28_task, "ui_1_28_task", 4096, (void *)disp_128, 5, NULL);
+    // xTaskCreate(ui_0_96_task, "ui_0_96_task", 4096, (void *)disp_096, 5, NULL);
+    // static lv_img_dsc_t img_dsc_motive;
+    image_mmap_init();
+    static lv_img_dsc_t img_dsc_motive_A;
+    static lv_img_dsc_t img_dsc_motive_B;
+
+    // bsp_display_lock(0);
+
+    // ESP_LOGI(TAG, "screen size:[%d,%d]", LV_HOR_RES, LV_VER_RES);
+
+    bsp_display_lock(0);
+
+    // lv_disp_set_default(disp_096);
+    lv_obj_t *obj_bg_096 = lv_obj_create(lv_disp_get_scr_act(disp_096));
+    // lv_obj_t *obj_bg_096 = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(obj_bg_096, BSP_LCD_0_9_6_H_RES, BSP_LCD_0_9_6_H_RES);
+    lv_obj_set_align(obj_bg_096, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(obj_bg_096, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(obj_bg_096, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_border_width(obj_bg_096, 0, 0);
+    lv_obj_set_style_radius(obj_bg_096, 0, 0);
+
+    lv_obj_t *obj_img_run_particles_096 = lv_img_create(obj_bg_096);
+    lv_obj_set_align(obj_img_run_particles_096, LV_ALIGN_CENTER);
+
+    // lv_disp_set_default(disp_128);
+    lv_obj_t *obj_bg_128 = lv_obj_create(lv_disp_get_scr_act(disp_128));
+    lv_obj_set_size(obj_bg_128, BSP_LCD_1_2_8_H_RES, BSP_LCD_1_2_8_H_RES);
+    lv_obj_set_align(obj_bg_128, LV_ALIGN_CENTER);
+    lv_obj_clear_flag(obj_bg_128, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(obj_bg_128, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_border_width(obj_bg_128, 0, 0);
+    lv_obj_set_style_radius(obj_bg_128, 0, 0);
+
+    lv_obj_t *obj_img_run_particles_128 = lv_img_create(obj_bg_128);
+    lv_obj_set_align(obj_img_run_particles_128, LV_ALIGN_CENTER);
+
+    bsp_display_unlock();
+
+    theme_select_t theme_last = THEME_MAX_NUM;
+    uint8_t list = 100;
+    int fps_count = 0;
+
+    // static mmap_assets_handle_t handle;
+    uint32_t max_size_A = 0;
+    uint32_t max_size_B = 0;
+    // if (select == 1) {
+        mmap_handle_A  = asset_DriverA_handle;
+        max_size_A = MMAP_OUT1_FILES;
+    // } else {
+        mmap_handle_B  = asset_DriverB_handle;
+        max_size_B = MMAP_OUT2_FILES;
+    // }
+
+    while (1) {
+        bsp_display_lock(0);
+
+        if (theme_last ^ theme_select) {
+            theme_last = theme_select;
+        }
+        if (true == anmi_do_run) {
+            list++;
+            lv_obj_clear_flag(obj_img_run_particles_096, LV_OBJ_FLAG_HIDDEN);
+
+            img_dsc_motive_A.data_size = mmap_assets_get_size(mmap_handle_A, (list) % max_size_A);
+            img_dsc_motive_A.data = mmap_assets_get_mem(mmap_handle_A, (list) % max_size_A);
+            lv_img_set_src(obj_img_run_particles_096, &img_dsc_motive_A);
+
+            lv_obj_clear_flag(obj_img_run_particles_128, LV_OBJ_FLAG_HIDDEN);
+
+            img_dsc_motive_B.data_size = mmap_assets_get_size(mmap_handle_B, (list) % max_size_B);
+            img_dsc_motive_B.data = mmap_assets_get_mem(mmap_handle_B, (list) % max_size_B);
+            lv_img_set_src(obj_img_run_particles_128, &img_dsc_motive_B);
 
             if (fps_count % 10 == 0) {
                 perfmon_start(0, "PFS", "png");
@@ -145,16 +337,43 @@ void ui_1_28_start(uint8_t select)
             fps_count++;
         } else {
             list = 0;
-            lv_obj_add_flag(obj_img_run_particles, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(obj_img_run_particles_096, LV_OBJ_FLAG_HIDDEN);
+
+            lv_obj_add_flag(obj_img_run_particles_128, LV_OBJ_FLAG_HIDDEN);
         }
         lv_refr_now(NULL);
+
+        // if (theme_last ^ theme_select) {
+        //     theme_last = theme_select;
+        // }
+        // if (true == anmi_do_run) {
+        //     list++;
+        //     lv_obj_clear_flag(obj_img_run_particles_128, LV_OBJ_FLAG_HIDDEN);
+
+        //     img_dsc_motive.data_size = mmap_assets_get_size(mmap_handle_B, (list) % max_size_B);
+        //     img_dsc_motive.data = mmap_assets_get_mem(mmap_handle_B, (list) % max_size_B);
+        //     lv_img_set_src(obj_img_run_particles_128, &img_dsc_motive);
+
+        //     // if (fps_count % 10 == 0) {
+        //     //     perfmon_start(0, "PFS", "png");
+        //     //     // printf_stack();
+        //     // } else if (fps_count % 10 == 9) {
+        //     //     perfmon_end(0, 10);
+        //     // }
+        //     // fps_count++;
+        // } else {
+        //     list = 0;
+        //     lv_obj_add_flag(obj_img_run_particles_128, LV_OBJ_FLAG_HIDDEN);
+        // }
+        // lv_refr_now(NULL);
+
         bsp_display_unlock();
 
-        if (select == 1) {
-            vTaskDelay(pdMS_TO_TICKS(5));
-        } else {
+        // if (select == 1) {
+        //     vTaskDelay(pdMS_TO_TICKS(5));
+        // } else {
             vTaskDelay(pdMS_TO_TICKS(1));
-        }
+        // }
     }
 
     mmap_assets_del(asset_DriverA_handle);
