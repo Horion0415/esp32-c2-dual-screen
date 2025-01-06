@@ -269,7 +269,7 @@ void ui_start(lv_disp_t *disp_096, lv_disp_t *disp_128)
     // lv_disp_set_default(disp_096);
     lv_obj_t *obj_bg_096 = lv_obj_create(lv_disp_get_scr_act(disp_096));
     // lv_obj_t *obj_bg_096 = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(obj_bg_096, BSP_LCD_0_9_6_H_RES, BSP_LCD_0_9_6_H_RES);
+    lv_obj_set_size(obj_bg_096, BSP_LCD_0_9_6_H_RES, BSP_LCD_0_9_6_V_RES);
     lv_obj_set_align(obj_bg_096, LV_ALIGN_CENTER);
     lv_obj_clear_flag(obj_bg_096, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(obj_bg_096, lv_color_hex(0x000000), 0);
@@ -281,7 +281,7 @@ void ui_start(lv_disp_t *disp_096, lv_disp_t *disp_128)
 
     // lv_disp_set_default(disp_128);
     lv_obj_t *obj_bg_128 = lv_obj_create(lv_disp_get_scr_act(disp_128));
-    lv_obj_set_size(obj_bg_128, BSP_LCD_1_2_8_H_RES, BSP_LCD_1_2_8_H_RES);
+    lv_obj_set_size(obj_bg_128, BSP_LCD_1_2_8_H_RES, BSP_LCD_1_2_8_V_RES);
     lv_obj_set_align(obj_bg_128, LV_ALIGN_CENTER);
     lv_obj_clear_flag(obj_bg_128, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(obj_bg_128, lv_color_hex(0x000000), 0);
@@ -301,11 +301,11 @@ void ui_start(lv_disp_t *disp_096, lv_disp_t *disp_128)
     uint32_t max_size_A = 0;
     uint32_t max_size_B = 0;
     // if (select == 1) {
-        mmap_handle_A  = asset_DriverA_handle;
-        max_size_A = MMAP_OUT1_FILES;
+        mmap_handle_A  = asset_DriverB_handle;
+        max_size_A = MMAP_OUT2_FILES;
     // } else {
-        mmap_handle_B  = asset_DriverB_handle;
-        max_size_B = MMAP_OUT2_FILES;
+        mmap_handle_B  = asset_DriverA_handle;
+        max_size_B = MMAP_OUT1_FILES;
     // }
 
     while (1) {
