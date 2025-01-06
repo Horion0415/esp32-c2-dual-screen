@@ -287,7 +287,7 @@ esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_hand
     const esp_lcd_panel_io_spi_config_t io_config = {
         .dc_gpio_num = BSP_LCD_DC,
 #if USE_SCREEN_096
-        .cs_gpio_num = BSP_LCD_BL_096,
+        .cs_gpio_num = BSP_LCD_CS_096,
 #else
         .cs_gpio_num = BSP_LCD_CS_100,
 #endif
@@ -336,7 +336,7 @@ esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_hand
     #if USE_SCREEN_096
         BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel, 24, 0));
         BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel, true, true));
-   #else
+    #else
         BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_set_gap(*ret_panel, 0, 32));
         BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_invert_color(*ret_panel, false));
         BSP_ERROR_CHECK_RETURN_ERR(esp_lcd_panel_mirror(*ret_panel, true, true));

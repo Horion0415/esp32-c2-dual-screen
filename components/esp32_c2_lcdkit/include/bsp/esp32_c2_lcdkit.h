@@ -17,7 +17,7 @@
  *  ESP32-C3-LCDkit pinout
  **************************************************************************************************/
 
-#define USE_SCREEN_096          0
+#define USE_SCREEN_096          1
 
 /* Display */
 #define BSP_LCD_DATA0           (GPIO_NUM_0)
